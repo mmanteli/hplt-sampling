@@ -3,7 +3,11 @@ import sys
 import random
 limit = float(sys.argv[1])
 
+# PIPED INPUT
 for line in sys.stdin:
     if random.random() < limit:
-        d = json.loads(line)
-        print(d)
+        try:
+            j = json.loads(line)
+            print(json.dumps(j))
+        except:
+            continue
