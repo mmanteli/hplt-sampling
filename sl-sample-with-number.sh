@@ -16,15 +16,18 @@ END=$2
 
 if [[ $START -gt $END ]]
    then
-       echo "Param START needs to be smaller than END"
+       echo "Param START needs to be smaller than or equal to END"
        exit 1
 fi
 
-# change both of these for version
-url_stem="https://data.hplt-project.org/one/monotext/cleaned/en/en_#.jsonl.zst"
-output_path="/scratch/project_2005092/amanda/mahti-tokenisation/results/v_1_2"
-probability_file=1.1          # Probability thresholds (0 to 1)
-probability_row=0.01
+# CHANGE THESE
+url_stem="https://data.hplt-project.org/two/cleaned/eng_Latn/#.jsonl.zst"
+output_path="/scratch/project_2005092/amanda/mahti-tokenisation/results/v_2_0"   # basename of this added to logs
+
+# Probability thresholds (0 to 1)
+probability_file=1.1        # probability to select a file   
+probability_row=0.0017          # probability to select a row
+
 mkdir -p temp
 mkdir -p $output_path
 
@@ -33,10 +36,11 @@ module load parallel
 
 # Main script logic
 for ((i=START;i<=END;i++)); do
+    # get the url from which to download
     url=${url_stem/"#"/$i}
     echo "In ${url}"
-    p=$(basename $url)    # for saving in temp
-    bname="${p%.*}"     # for outfile without .zst
+    p=$(basename $url)    # for saving in temp => multiple jobs can run simultaneously if the files are called different
+    bname="${p%.*}"     # for outfile without .zst => changing to .gz
     if wget --no-verbose -O temp/$p $url; then
         echo "Download succeeded: $p $(date +"%T")"
     else
@@ -50,8 +54,10 @@ for ((i=START;i<=END;i++)); do
     rm temp/$p
 done
 
-cp logs/$SLURM_JOBID.out "logs/v_1_2_sample_${START}-${END}.out"
-cp logs/$SLURM_JOBID.err "logs/v_1_2_sample_${START}-${END}.err"
+
+log_name=$(basename $output_path)
+cp logs/$SLURM_JOBID.out "logs/${log_name}_sample_${START}-${END}.out"
+cp logs/$SLURM_JOBID.err "logs/${log_name}_sample_${START}-${END}.err"
 
 exit 0
 
