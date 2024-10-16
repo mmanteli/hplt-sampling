@@ -10,6 +10,8 @@
 #SBATCH -o logs/%x.out
 #SBATCH -e logs/%x.err
 
+# this comment is here to test LUMI web interface
+
 # Input parameters
 url_file="/scratch/project_2005092/amanda/en_map_v1_1.txt"  
 output_path="/scratch/project_2005092/amanda/mahti-tokenisation/results"
