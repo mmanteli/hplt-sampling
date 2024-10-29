@@ -6,13 +6,14 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 ##SBATCH --hint=nomultithread
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=64
 #SBATCH -o logs/%j.out
 #SBATCH -e logs/%j.err
 
 # Input parameters
-START=$1
-END=$2
+version=$1
+START=$2
+END=$3
 
 if [[ $START -gt $END ]]
    then
@@ -21,12 +22,44 @@ if [[ $START -gt $END ]]
 fi
 
 # CHANGE THESE
-url_stem="https://data.hplt-project.org/two/cleaned/eng_Latn/#.jsonl.zst"
-output_path="/scratch/project_2005092/amanda/mahti-tokenisation/results/v_2_0"   # basename of this added to logs
+#url_stem="https://data.hplt-project.org/two/cleaned/eng_Latn/#.jsonl.zst"
+#output_path="/scratch/project_2005092/amanda/mahti-tokenisation/results/v_2_0"   # basename of this added to logs
+# Probability threshold (0 to 1)
+#probability_row=0.0017          # probability to select a row
 
-# Probability thresholds (0 to 1)
-probability_file=1.1        # probability to select a file   
-probability_row=0.0017          # probability to select a row
+
+case $version in
+    1_0)
+        url_stem="https://data.hplt-project.org/one/monotext/en/#.jsonl.zst"
+        output_path="/scratch/project_2005092/amanda/mahti-tokenisation/results/v_1_0"
+        probability_row=0.023  # these all have +0.002 so that we go over 300B tokens
+        ;;
+    1_1)
+        url_stem="https://data.hplt-project.org/one/monotext/deduplicated/en/en_#.jsonl.zst"
+        output_path="/scratch/project_2005092/amanda/mahti-tokenisation/results/v_1_1"
+        probability_row=0.078
+        ;;
+    1_2)
+        url_stem="https://data.hplt-project.org/one/monotext/cleaned/en/en_#.jsonl.zst"
+        output_path="/scratch/project_2005092/amanda/mahti-tokenisation/results/v_1_2"
+        probability_row=0.098
+        ;;
+    2_0 | 2_0cleaned)
+        url_stem="https://data.hplt-project.org/two/cleaned/eng_Latn/#.jsonl.zst"
+        output_path="/scratch/project_2005092/amanda/mahti-tokenisation/results/v_2_0"   # basename of this added to logs
+        probability_row=0.079
+        ;;
+    2_0dedup)
+        url_stem="https://data.hplt-project.org/two/deduplicated/eng_Latn/#.jsonl.zst"
+        output_path="/scratch/project_2005092/amanda/mahti-tokenisation/results/v_2_0_dedup"
+        probability_row=0.065
+        ;;
+    *)
+    echo "Version number not given correctly"
+    exit 1
+    ;;
+esac
+
 
 mkdir -p temp
 mkdir -p $output_path
@@ -49,7 +82,7 @@ for ((i=START;i<=END;i++)); do
     fi
     # process in parallel
     echo "processing temp/${p}"
-    zstdcat "temp/$p" | parallel --pipe -j8 -k --block 10M python3 sample.py $probability_row | pigz > "${output_path}/${bname}.gz"
+    zstdcat "temp/$p" | parallel --pipe -j64 -k --block 10M python3 sample.py $probability_row | pigz > "${output_path}/${bname}.gz"
     echo "success with ${p} $(date +"%T")"
     rm temp/$p
 done
