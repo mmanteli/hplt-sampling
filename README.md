@@ -1,2 +1,2 @@
-# mahti-tokenisation
-Dump for tokenisation scripts on Mahti
+# hplt-sampling
+Dump for sampling scripts.
