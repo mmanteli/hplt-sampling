@@ -12,6 +12,6 @@ for line in sys.stdin:
     if random.random() < limit:
         try:
             j = json.loads(line)
-            print(json.dumps(j))
+            print(json.dumps({"id":j["id"], "text":j["text"]}))  #tested to be faster than .get etc
         except:
             continue
